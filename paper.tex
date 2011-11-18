@@ -1,0 +1,40 @@
+\documentclass{article}
+
+\title{Jug: Software for Reproducible Computation}
+\author{Luis Pedro Coelho}
+
+\begin{document}
+\section*{Abstract}
+As computational pipelines become a bigger part of science, it is important to
+ensure that the results are reproducible. All developed software should be able
+to be run automatically without any user intervention.
+
+In addition to the value to the community of being able to reproduce an
+analysis, reproducible research practices allow for better control over the
+project. For example, if necessary parameters to run a pipeline are kept
+separately from the code that implements it (perhaps even in the researcher's
+mind), this leads to error-prone analysis and opens up the possibility that
+when the results are to be writtne up for publication, the researcher will no
+longer be able to even completely describe the process that led to them.
+
+For large projects, the use of multiple processors (either in the same machine
+or distributed across a cluster) is necessary to obtain results in a useful
+timeframe. Furthermore, it is often the case that, as the project evolves, it
+becomes necessary to save intermediate results while down-stream analyses are
+designed (or redesigned) and implemented. Therefore, having a single point of
+entry (often in the form of a single script or a single main programme) for the
+computation becomes increasingly difficult.
+
+Jug is a software framework which solves all of these problems in a
+simple way. Jug supports caching of intermediate results, distribution of
+computation as tasks across a network.
+
+Jug is written in pure Python, is completely cross-platform, and available as
+free software under the MIT license. Jug is available from
+\url{http://github.com/luispedro/jug}.
+
+\section{Introduction}
+\section{Methods}
+\section{Example}
+\section{Discussion}
+\end{document}
