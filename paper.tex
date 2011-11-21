@@ -34,6 +34,231 @@ free software under the MIT license. Jug is available from
 \url{http://github.com/luispedro/jug}.
 
 \section{Introduction}
+Jug is a task-based framework for Python, which supports saving and sharing of
+intermediate results and parallelisation on computer clusters (or multi-core
+machines).
+
+\subsection{Task Based Architecture}
+
+Jug is designed around tasks. A task is defined as a Python function and a set
+of arguments, which may be Python values or the output of other tasks. A task
+should be a pure function, but there is no way of mandating this in the
+language.
+
+\begin{python}
+from jug import Task
+
+def count(imname):
+    ...
+    return value
+
+def mean(args):
+    return sum(args)/float(len(args))
+
+images = glob('*.png')
+counts = [Task(count, im) for im in images]
+final = Task(mean, counts)
+\end{python}
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+\node (mean) at (0,2) [draw] {\code{mean}};
+\node (count0) at (5,3) [draw] {\code{count('0.png')}};
+\node (count1) at (5,2) [draw] {\code{count('1.png')}};
+\node (count2) at (5,1) [draw] {\code{count('2.png')}};
+\node (countn) at (5,0) {\ldots};
+
+\draw[->] (mean.east) -- (count0.west);
+\draw[->] (mean.east) -- (count1.west);
+\draw[->] (mean.east) -- (count2.west);
+\draw[->] (mean.east) -- (countn.west);
+\end{tikzpicture}
+
+\end{center}
+\caption{Simple Dependency Structure for Example in the Text. This assumes that
+the directory had a collection of images names 0.png, 1.png,\ldots}
+\label{fig:jug-deps}
+\end{figure}
+
+This defines the task dependency structure represented in
+Figure~\ref{fig:jug-deps}. As we can see, all of the \code{count} operations
+can be run in parallel, while the \code{mean} operation must wait the result of
+all of the other computation. The dependency structure is always a \textsc{dag}
+(directed acyclic graph). Only by bypassing the normal use mechanisms is it
+even possible to construct a cycle.
+
+The code above has the construct \code{Task(f, args)} repeated several times.
+Using the decorator \code{TaskGenerator} decorator this can be simplified to a
+more natural syntax.
+
+\begin{python}
+from jug import TaskGenerator
+
+@TaskGenerator
+def count(imname):
+    ...
+    return value
+
+@TaskGenerator
+def mean(args):
+    return sum(args)/float(len(args))
+
+images = glob('*.png')
+counts = map(count, images)
+final = mean(counts)
+\end{python}
+
+As the reader can appreciate, this is identical to a traditional Python script,
+except for the \code{@TaskGenerator} decorators.
+
+By default, jug looks for a file called \code{jugfile.py}, but any filename can
+be used. Generically, we refer to the script being run as the jugfile.
+
+\subsection{Jug subcommands}
+
+Jug is structured as a series of subcommands, the most important of which are
+\emph{execute}, \emph{status}, and \emph{shell}.
+
+Execution is the command used for running the tasks. In broad terms it performs
+the loop below.
+
+\begin{python}
+tasks = alltasks in topological sort order
+while tasks:
+    next = task.pop()
+    if not next.has_run() and not next.is_running():
+        while not next.can_run():
+            wait a while
+        with locked(next):
+            next.run()
+\end{python}
+
+If run on a single processor, this will just run all of the tasks in order. It
+is most interesting when it is run on multiple processors. There it executes
+all of the tasks that can be executed in parallel.
+
+Of course, the actual code is more complex than what is shown above,
+particularly to make sure that the locking is performed correctly and that the
+waiting step eventually times out (in order to handle the situation where
+another process is hung).
+
+\begin{figure}
+\begin{verbatim}
+$jug status images.py
+Task name         Waiting      Ready   Finished    Running
+----------------------------------------------------------
+images.mean             1          0          0          0
+images.count            0         20          0          0
+..........................................................
+Total:                  1         20          0          0
+\end{verbatim}
+\caption{Output of \code{jug status}. The \texttt{\$} sign shown is the command
+line prompt, and the status subcommand was run. At this point, nothing has been
+run. The output has been edited for space reasons (spacing columns were
+removed).}
+\label{fig:jug-status-output}
+\end{figure}
+
+The status command prints out a summary of the status of all of the tasks.
+Figure~\ref{fig:jug-status-output} shows the output of this command using the
+example jugfile above. We assume that the jugfile was called \code{images.py}
+on disk and that there were 20~images in the directory. We can see that there
+are 20~tasks ready to run, while the \code{mean} task is still waiting for the
+results of the other tasks.
+
+\subsection{Backends}
+
+A basic feature of jug is its ability to save and load results. Each task
+\code{Task(f, args)} is represented by a hash of \code{f} and \code{args} in a
+way that uniquely identifies it.
+
+A jug backend must then support four basic operations:
+
+\begin{description}
+\item[save] Saving a Python object by its hash name.
+\item[load] Loading a Python object by its hash name.
+\item[lock] Creating a lock by hash name. Naturally, this lock must be created
+atomically.
+\item[release] Releasing the lock.
+\end{description}
+
+A few other operations, such as deletion and listing of names are also
+supported.
+
+The filesystem can support all of the above operations if coded correctly to
+avoid race conditions. This is the default backend, identified simply by a
+directory name. Inside this directory, files named by a hexadecimal
+representation of their hashes. Objects are saved using Python's \code{pickle}
+module with zlib compression. As a special case, \code{numpy} arrays are saved
+to disk directly. For functionality, there was no need for this inelegant
+special case, but \code{numpy} arrays are a very common data type in scientific
+programming and saving them directly allows for very fast saving and loading
+(they are represented on disk as a header followed by the binary information
+they contain).
+
+Another backend currently included with jug is a redis backend. Redis a
+name-key database system.\footnote{See the redis webpage, at
+\href{http://redis.io}{redis.io}, for detailed information about redis.} Redis
+is particularly recommended for the case where there are many small objects
+being saved. In this case, keeping each as a separate file on disk would incur
+a large space penalty, while redis keeps them all in the same file.
+
+Finally, there is an in-memory backend. This was initially developed for
+testing, but can be useful on its own.
+
+Results can be obtained from jug in two ways: (1) One can simply write a task
+that outputs the desired format. (2) They can be inspected interactively using
+the \emph{shell} subcommand.
+
+The shell subcommand, invokes an IPython instance with all the objects in the
+jugfile loaded. IPython is an enhanced interactive shell for Python
+\citep{Perez2007}. A few functions are added to the namespace, in particular,
+\code{value} can load the results of a task object if necessary.
+
+\begin{figure}
+\begin{center}
+\begin{verbatim}
+$jug shell images.py
+
+=========
+Jug Shell
+=========
+
+
+Available jug functions:
+    - value() : loads a specific object
+    - load_all() : loads all objects
+
+Enjoy...
+
+
+In [1]: value(final)
+Out[1]: 7.5
+
+In [2]: value(counts)
+Out[2]: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
+\end{verbatim}
+\end{center}
+\caption{Interaction with \code{jug shell}.}
+\label{fig:jug-shell-interaction}
+\end{figure}
+
+Figure~\ref{fig:jug-shell-interaction} shows a possible interaction session
+with jug shell. While having to explicitly load all the results is a bit
+bothersome, it has some advantages versus the alternative of pre-loading all.
+It is much faster at startup. Consider too that the user might not load more
+than a few objects. In some cases, loading all of the objects simultaneously
+might even be impossible due to memory constraints. Further, this allows
+exploration of the task structure for debugging.
+
+Jug includes a full test suite. There are no known bugs.
+
+Jug has been available in the Python Package Index\footnote{The Python Package
+Index, PyPI, is accessible at \url{http://pypi.python.org}.} since May~2009
+and has been downloaded over 6000~times (some of these downloads may, of
+course, represent upgrades, and users which downloaded it from some other
+source will not be counted).% FIXME: Check download number. At 5713 8/31/2011
 \section{Methods}
 \section{Example}
 \section{Discussion}
