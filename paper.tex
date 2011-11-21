@@ -38,6 +38,19 @@ Jug is a task-based framework for Python, which supports saving and sharing of
 intermediate results and parallelisation on computer clusters (or multi-core
 machines).
 
+By allowing caching of results, where the caching depends explicitly on the
+input parameters of that computation. Any change in the parameters immediately
+triggers a recomputation of all dependendent results. The basic model is
+similar to the one of the venerable Unix tool Make~\citep{}, which has been
+used before for implementing reproducible research pipelines~\citep{}.
+
+However, unlike make, jug is written in Python and tasks can consist of any
+Python function and its arguments. A jugfile (the file which specifies which
+tasks need to be run---named by analogy to the makefiles of make) is a simple
+Python script with some added notations (we will see just how little changes
+need to be made from a conventional Python script).
+
+\section{Jug}
 \subsection{Task Based Architecture}
 
 Jug is designed around tasks. A task is defined as a Python function and a set
@@ -110,7 +123,9 @@ final = mean(counts)
 \end{python}
 
 As the reader can appreciate, this is identical to a traditional Python script,
-except for the \code{@TaskGenerator} decorators.
+except for the \code{@TaskGenerator} decorators. With a few limitations (which
+unfortunately can give rise to complex error messages), scripts can be written
+as if they were sequential Python scripts.
 
 By default, jug looks for a file called \code{jugfile.py}, but any filename can
 be used. Generically, we refer to the script being run as the jugfile.
@@ -252,6 +267,16 @@ than a few objects. In some cases, loading all of the objects simultaneously
 might even be impossible due to memory constraints. Further, this allows
 exploration of the task structure for debugging.
 
+\section{Methods}
+\section{Example}
+\section{Development of Jug}
+Jug is available under the MIT software license, which grants the user right to
+use, copy, and modify the code almost at will. It is developed using the git
+version control tool, with the project being hosted on the github
+platform.\footnote{The jug project is available at
+\url{https://www.github.com/luispedro/jug}.} An open mailing-list provides
+support and reported bugs are generally fixed within hours.
+
 Jug includes a full test suite. There are no known bugs.
 
 Jug has been available in the Python Package Index\footnote{The Python Package
@@ -259,7 +284,18 @@ Index, PyPI, is accessible at \url{http://pypi.python.org}.} since May~2009
 and has been downloaded over 6000~times (some of these downloads may, of
 course, represent upgrades, and users which downloaded it from some other
 source will not be counted).% FIXME: Check download number. At 5713 8/31/2011
-\section{Methods}
-\section{Example}
+
 \section{Discussion}
+Unlike most previous tools for reproducible research, jug focuses on the
+development of the computation as much as its communication (in fact, when it
+comes to communication other tools might be better targetted as they combine
+written exposition with computer code). While it still possible to make errors
+(for example, by changing the code but neglecting to invalidate the results),
+jug improves the pipeline development experience and makes the programming
+researcher more productive.
+
+In the last few years, I have not undertaken any computational research project
+without the use of jug to manage my computations. The tool has become an
+indispensible part of my toolkit.
+
 \end{document}
