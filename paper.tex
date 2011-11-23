@@ -311,6 +311,79 @@ while supporting automatic dependency discovery to make it easier for the user.
 
 \section{Methods}
 \section{Example}
+I will present an example from my research. Although it introduces some
+unnecessary complexity, it has the advantage of being a real-life example of
+the usage of jug.
+
+The goal of this project was to demonstrate that using local features, in
+particular speeded-up robust features (henceforth,
+\textsc{surf})~\cite{surf-paper} improves over image-global features for
+classification of microscope images. A variation of standard \textsc{surf},
+\textsc{surf}-ref, was introduced and tested.
+
+To evaluate classification, the dataset is broken up into 10~pieces and each of
+the pieces is held-out of the analysis and then used to evaluate analysis (the
+final result is the average of all ten values). This is known as
+cross-validation. In this case, I use another library (which I also wrote)
+which has a builtin method for jug-aware cross-validation.
+
+\begin{python}
+from jug import TaskGenerator, CachedFunction
+
+# pyslic is used for subcellular location analysis
+import pyslic
+
+# milk (machine learning toolkit)
+from milk.ext.jugparallel import nfoldcrossvalidation
+
+datasets = [ 'data0', 'data1', ]
+featuresets = [ 'field-dna+', 'surf', 'surf-ref', ]
+
+def load(dset):
+    '''
+    This function assumes that the images are stored in ../data/dset with
+    filenames matching the pattern
+    label-(protein|dna)-([0-9]).tiff
+    '''
+    from os import listdir
+    images = []
+    base = '../data/'+dset
+    for path in listdir(base):
+        if not 'protein' in path: continue
+        label = path.split('-')[0]
+        # We only store paths and will load data on demand
+        # This save memory.
+        im = pyslic.Image({
+                'protein': base + path,
+                'dna' : base + path.replace('protein','dna')
+                })
+        im.label = label
+        images.append(im)
+    return images
+
+# pyslic.computefeatures takes an image and an identifier of the feature set
+# and returns a set of features (as a numeric array).
+#
+# TaskGenerator can be used directly to adapt existing functions
+computefeatures = TaskGenerator(pyslic.computefeatures)
+
+# or it can be used as a decorator on a newly defined function
+@TaskGenerator
+def output(cmatrix, dset, fset):
+    output = file('results/cmatrix-'+dset+'-'+fset+'.txt', 'w')
+    print >>output, cmatrix
+    output.close()
+
+features = []
+for dset in datasets:
+    images = CachedFunction(load, dset)
+    labels = [im.label for im in images]
+    for fset in featuresets:
+        features = [computefeatures(im, fset) for im in images]
+        cmatrix = nfoldcrossvalidation(features, labels)
+        output(cmatrix, dset, fset)
+\end{python}
+
 \section{Development of Jug}
 Jug is available under the MIT software license, which grants the user right to
 use, copy, and modify the code almost at will. It is developed using the git
