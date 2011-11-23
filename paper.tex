@@ -50,7 +50,7 @@ tasks need to be run---named by analogy to the makefiles of make) is a simple
 Python script with some added notations (we will see just how little changes
 need to be made from a conventional Python script).
 
-\section{Jug}
+\section{Design Choices}
 \subsection{Task Based Architecture}
 
 Jug is designed around tasks. A task is defined as a Python function and a set
@@ -181,7 +181,6 @@ example jugfile above. We assume that the jugfile was called \code{images.py}
 on disk and that there were 20~images in the directory. We can see that there
 are 20~tasks ready to run, while the \code{mean} task is still waiting for the
 results of the other tasks.
-
 \subsection{Backends}
 
 A basic feature of jug is its ability to save and load results. Each task
@@ -201,16 +200,17 @@ atomically.
 A few other operations, such as deletion and listing of names are also
 supported.
 
-The filesystem can support all of the above operations if coded correctly to
-avoid race conditions. This is the default backend, identified simply by a
-directory name. Inside this directory, files named by a hexadecimal
+The filesystem can support all of the above operations if the backend is coded
+correctly to avoid race conditions. This is the default backend, identified
+simply by a directory name. Inside this directory, files named by a hexadecimal
 representation of their hashes. Objects are saved using Python's \code{pickle}
-module with zlib compression. As a special case, \code{numpy} arrays are saved
-to disk directly. For functionality, there was no need for this inelegant
-special case, but \code{numpy} arrays are a very common data type in scientific
-programming and saving them directly allows for very fast saving and loading
-(they are represented on disk as a header followed by the binary information
-they contain).
+module with zlib compression. As a special case, \code{numpy} arrays
+\citep{numpy} are saved to disk directly. For functionality, there was no need
+for this inelegant special case as \code{numpy} can be saved as a pickle dump,
+but \code{numpy} arrays are a very common data type in scientific programming
+and saving them directly allows for very fast saving and loading (they are
+represented on disk as a header followed by the binary information they
+contain).
 
 Another backend currently included with jug is a redis backend. Redis a
 name-key database system.\footnote{See the redis webpage, at
@@ -222,9 +222,24 @@ a large space penalty, while redis keeps them all in the same file.
 Finally, there is an in-memory backend. This was initially developed for
 testing, but can be useful on its own.
 
-Results can be obtained from jug in two ways: (1) One can simply write a task
-that outputs the desired format. (2) They can be inspected interactively using
-the \emph{shell} subcommand.
+\subsection{Asynchronous Function}
+
+Parallelisation is achieved by running more than one jug process
+simmultaneously. All of the synchronisation is outsourced to the backend. This
+has certain limitations, but it makes jug usable in cluster computing
+environments with a batch architecture. As long as all of the processes can
+access the backend, there is no need for them to communicate directly.
+Therefore, it can even be the case that processors start working on tasks in
+mid-processing.
+
+\subsection{Development Support}
+
+
+The output of computation can be obtained from jug in two ways: (1) One can
+simply write a task that outputs the desired format. (2) They can be inspected
+interactively using the \emph{shell} subcommand. It is expected that the first
+option will be used for the final version of the computation, whilst the second
+one is most helpful during development.
 
 The shell subcommand, invokes an IPython instance with all the objects in the
 jugfile loaded. IPython is an enhanced interactive shell for Python
@@ -266,6 +281,33 @@ It is much faster at startup. Consider too that the user might not load more
 than a few objects. In some cases, loading all of the objects simultaneously
 might even be impossible due to memory constraints. Further, this allows
 exploration of the task structure for debugging.
+
+\subsection{Result Invalidation}
+
+It is often the case that one improves a step in a computational pipeline and
+wished to obtain the result of recomputing the pipeline while reusing as much
+of the previously computed intermediate results. With the manual management of
+results I found this to be the most error-prone operation: by not removing
+enough of the intermediate files, it was easy to generate an irreproducible
+state where part of the computations were made using one version of the code
+and part with another.
+
+Therefore, jug adds some support for result invalidation. When a results from a
+task are invalidated, all tasks which, directly or indirectly, depend on them
+are also marked for deletion.
+
+It is still necessary to manually invalidate tasks. An alternative, which I
+considered, was to have the code which implements the task be taken into
+account while computing the hash. While this would add another layer of
+protection, it would still be possible to make mistakes. If the function
+depended on other functions, especially if this was done in a dynamic way, it
+could be hard to discover all dependencies (cf.\ sumatra~\citep{sumatra}).
+Additionally, minute refactoring of the code would lead to over eager
+recomputation. This could make the developer wary of making improvements in
+their code, resulting in overall worse code.
+
+Therefore, I chose to force the user to explicitly invalidate his results,
+while supporting automatic dependency discovery to make it easier for the user.
 
 \section{Methods}
 \section{Example}
