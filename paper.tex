@@ -254,8 +254,7 @@ access the backend, there is no need for them to communicate directly.
 Therefore, it can even be the case that processors start working on tasks in
 mid-processing.
 
-\subsection{Development Support}
-
+\subsection{Software Development With Jug}
 
 The output of computation can be obtained from jug in two ways: (1) One can
 simply write a task that outputs the desired format. (2) They can be inspected
@@ -303,6 +302,9 @@ It is much faster at startup. Consider too that the user might not load more
 than a few objects. In some cases, loading all of the objects simultaneously
 might even be impossible due to memory constraints. Further, this allows
 exploration of the task structure for debugging.
+
+This is a feature which can be used to debug one's own code or to explore the
+results of a computation by others.
 
 \subsection{Result Invalidation}
 
@@ -425,7 +427,7 @@ source will not be counted).% FIXME: Check download number. At 5713 8/31/2011
 \section{Discussion}
 Unlike most previous tools for reproducible research, jug focuses on the
 development of the computation as much as its communication (in fact, when it
-comes to communication other tools might be better targetted as they combine
+comes to communication other tools might be better suited as they combine
 written exposition with computer code). While it still possible to make errors
 (for example, by changing the code but neglecting to invalidate the results),
 jug improves the pipeline development experience and makes the programming
