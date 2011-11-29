@@ -26,6 +26,8 @@
 \author{Luis Pedro Coelho}
 
 \begin{document}
+\maketitle
+
 \section*{Abstract}
 As computational pipelines become a bigger part of science, it is important to
 ensure that the results are reproducible. All developed software should be able
@@ -54,6 +56,8 @@ computation as tasks across a network.
 Jug is written in pure Python, is completely cross-platform, and available as
 free software under the MIT license. Jug is available from
 \url{http://github.com/luispedro/jug}.
+\bigskip
+\bigskip
 
 \section{Introduction}
 Jug is a task-based framework for Python, which supports saving and sharing of
@@ -63,8 +67,9 @@ machines).
 By allowing caching of results, where the caching depends explicitly on the
 input parameters of that computation. Any change in the parameters immediately
 triggers a recomputation of all dependendent results. The basic model is
-similar to the one of the venerable Unix tool Make~\citep{}, which has been
-used before for implementing reproducible research pipelines~\citep{}.
+similar to the one of the venerable Unix tool Make, which has been used before
+for implementing reproducible research
+pipelines~\citep{Schwab00makingscientific}.
 
 However, unlike make, jug is written in Python and tasks can consist of any
 Python function and its arguments. A jugfile (the file which specifies which
