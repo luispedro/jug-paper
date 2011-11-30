@@ -253,11 +253,10 @@ testing, but can be useful on its own.
 
 Parallelisation is achieved by running more than one jug process
 simmultaneously. All of the synchronisation is outsourced to the backend. This
-has certain limitations, but it makes jug usable in cluster computing
+has certain limitations, but it makes jug usable in certain cluster computing
 environments with a batch architecture. As long as all of the processes can
-access the backend, there is no need for them to communicate directly.
-Therefore, it can even be the case that processors start working on tasks in
-mid-processing.
+access the backend, there is no need for them to communicate directly. It can
+even be the case that processors start working on tasks in mid-processing.
 
 \subsection{Software Development With Jug}
 
