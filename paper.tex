@@ -77,6 +77,17 @@ tasks need to be run---named by analogy to the makefiles of make) is a simple
 Python script with some added notations (we will see just how little changes
 need to be made from a conventional Python script).
 
+\citet{Fomel2007} proposed a system built on top of Scons which shared
+superficially similar design. Scons, like Make, is a build system. It supports
+spawning parallel jobs using multiple threads. In the original use case, the
+tasks are delegated to other commands and the operating system can take care of
+parallelism. If, however, the tasks are computationally intensive in Python,
+contention for the global interpreter lock will limit the amount of real
+parallelism.\footnote{In the most commonly used Python interpreters, there is a
+lock that prevents more than one thread from simultaneously executing
+interpreted code, although they can execute non-interpreted code, as calling an
+external programme or certain external libraries.}
+
 \section{Design Choices}
 \subsection{Task Based Architecture}
 
@@ -301,11 +312,11 @@ Out[2]: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8]
 
 Figure~\ref{fig:jug-shell-interaction} shows a possible interaction session
 with jug shell. While having to explicitly load all the results is a bit
-bothersome, it has some advantages versus the alternative of pre-loading all.
-It is much faster at startup. Consider too that the user might not load more
-than a few objects. In some cases, loading all of the objects simultaneously
-might even be impossible due to memory constraints. Further, this allows
-exploration of the task structure for debugging.
+bothersome, it can be better than pre-loading all of them. It is much faster at
+startup. Consider too that the user might not load more than a few objects. In
+some cases, loading all of the objects simultaneously might even be impossible
+due to memory constraints. Further, this allows exploration of the task
+structure for debugging.
 
 This is a feature which can be used to debug one's own code or to explore the
 results of a computation by others.
