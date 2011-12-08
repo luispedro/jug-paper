@@ -423,6 +423,43 @@ for dset in datasets:
         output(cmatrix, dset, fset)
 \end{python}
 
+Figure~\ref{fig:jug-deps-complex} shows the dependency structure of this
+examples. The main feature is the fan-out/fan-in which is associated with
+map-reduce frameworks.
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+\node (load) at (0,0) [draw] {load};
+\node (collect) at (4,0) [draw] {collect};
+\node (sum) at (8,0) [draw] {sum};
+\node (output) at (10,0) [draw] {output};
+
+\path[->]
+    (sum) edge (output);
+
+\foreach \y in {-2,-1,0,1,2} {%
+    \node (features\y) at (2,\y) [draw] {features};
+    \path[->]
+        (load) edge (features\y)
+        (features\y) edge (collect);
+}
+
+\foreach \y in {-2,-1,0,1,2} {%
+    \node (fold\y) at (6,\y) [draw] {fold};
+    \path[->]
+        (collect) edge (fold\y)
+        (fold\y) edge (sum);
+}
+\end{tikzpicture}
+
+\end{center}
+\caption{Dependency Structure for second example in the Text. The
+fan-out/fan-in structure is typical (it is an instance of the map-reduce
+framework).}
+\label{fig:jug-deps-complex}
+\end{figure}
+
 \section{Development of Jug}
 Jug is available under the MIT software license, which grants the user right to
 use, copy, and modify the code almost at will. It is developed using the git
@@ -447,6 +484,16 @@ written exposition with computer code). While it still possible to make errors
 (for example, by changing the code but neglecting to invalidate the results),
 jug improves the pipeline development experience and makes the programming
 researcher more productive.
+
+Jug was not designed to compete with more complex map/reduce frameworks such as
+Hadoop, which scale better to very large projects. However, those frameworks
+have much higher costs in terms of development time (code must be written
+especially for the framework) and overhead (starting up and shutting down jobs
+can take much longer and using non-Java code has additional computational
+costs). For scientists using small to medium-sized cluster (hundreds, not
+thousands, of nodes), with a shared file-system (as opposed to the distributed
+file-systems necessary for truly large amounts of data) jug might provide a
+better trade-off  than those higher-powered alternatives.
 
 In the last few years, I have not undertaken any computational research project
 without the use of jug to manage my computations. Additionally, I (and my
