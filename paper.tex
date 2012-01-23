@@ -343,13 +343,19 @@ considered, was to have the code which implements the task be taken into
 account while computing the hash. While this would add another layer of
 protection, it would still be possible to make mistakes. If the function
 depended on other functions, especially if this was done in a dynamic way, it
-could be hard to discover all dependencies (cf.\ sumatra~\citep{sumatra}).
-Additionally, minute refactoring of the code would lead to over eager
-recomputation. This could make the developer wary of making improvements in
-their code, resulting in overall worse code.
+could be hard to discover all dependencies (cf.\ sumatra~\footnote{Sumatra is a
+tool to collect all dependencies that are necessary to run a particular
+computation. Its webpage is located at
+\url{http://neuralensemble.org/trac/sumatra}.}). Additionally, minute
+refactoring of the code would lead to over eager recomputation. This could make
+the developer wary of making improvements in their code, resulting in overall
+worse code.
 
 Therefore, I chose to force the user to explicitly invalidate his results,
 while supporting automatic dependency discovery to make it easier for the user.
+The recommendation is still that the user run the full pipeline from start to
+finish once they are satisfied with the state of the code and certainly before
+publication.
 
 \section{Methods}
 \section{Example}
