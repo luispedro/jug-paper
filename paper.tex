@@ -487,14 +487,24 @@ source will not be counted).% FIXME: Check download number. At 8112 12/8/2011
 
 \section{Discussion}
 Unlike most previous tools for reproducible research, jug focuses on the
-development of the computation as much as its communication (in fact, when it
+development of the computation as much as its communication. In fact, when it
 comes to communication other tools might be better suited as they combine
-written exposition with computer code). While it still possible to make errors
-(for example, by changing the code but neglecting to invalidate the results),
-jug improves the pipeline development experience and makes the programming
-researcher more productive.
+written exposition with computer code. They can be used in combination with jug
+as they do not often provide caching and distribution, needed for large
+projects. While the simplest mode of jug use is to have a single
+\textit{jugfile}, a jugfile can import the results of another. For example, a
+first jugfile might perform all heavy-duty computation and be run on a
+computing cluster. A second script could be embedded inside an executable paper
+to generate tables and plots \citep{Delescluse2011}. This faster script could
+be run as part of building the paper (while the longer script would take too
+long).
 
-Jug was not designed to compete with more complex map/reduce frameworks such as
+While it still possible to make errors (for example, by changing the code but
+neglecting to invalidate the results), jug improves the pipeline development
+experience and makes the programming researcher more productive and less
+error-prone.
+
+Jug was not designed to compete with complete map/reduce frameworks such as
 Hadoop, which scale better to very large projects. However, those frameworks
 have much higher costs in terms of development time (code must be written
 especially for the framework) and overhead (starting up and shutting down jobs
@@ -502,7 +512,7 @@ can take much longer and using non-Java code has additional computational
 costs). For scientists using small to medium-sized cluster (hundreds, not
 thousands, of nodes), with a shared file-system (as opposed to the distributed
 file-systems necessary for truly large amounts of data) jug might provide a
-better trade-off  than those higher-powered alternatives.
+better trade-off than those higher-powered alternatives.
 
 In the last few years, I have not undertaken any computational research project
 without the use of jug to manage my computations. Additionally, I (and my
