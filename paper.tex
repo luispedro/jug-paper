@@ -61,6 +61,25 @@ free software under the MIT license. Jug is available from
 \bigskip
 
 \section{Introduction}
+The value of reproducible research in computational fields has been recognized
+in several areas \citep{Vandewalle2009,Nordlie2009}. Although some of the
+reports are still more forward looking rather than descriptive of current
+practice, several implementations of reproducible papers (or executable papers)
+have been proposed towards the goal of reproducing published analyses.
+
+These solutions do not necessarily scale to large problems, those that take
+several days, months, or years of CPU time. For very large problems,
+specialized solutions are needed, but there is a range of medium-sized problems
+that can be successfully tackled on a computer cluster with a few hundred nodes
+or less (so that a computation that would take a CPU-year can produce results
+in less than a day).
+
+The typical ad hoc solution to this problem is to save intermediate files.
+Often the design of the computation itself takes several iterations as
+intermediate steps are improved. Thus, some intermediate results need to be
+recomputed. This involves a great amount of human management of the state of
+the computation, breaking it up into pieces, and issuing jobs on the cluster.
+
 Jug is a task-based framework for Python, which supports saving and sharing of
 intermediate results and parallelisation on computer clusters (or multi-core
 machines).
