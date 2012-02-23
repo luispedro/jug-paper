@@ -111,15 +111,14 @@ Python-based solution which supports parallel execution of pipelines
 \citep{Goodstadt16092010}. There is a strong dependency on the filesystem,
 which makes its use very different from jug usage, which strives to make its
 usage similar to straight Python usage. Using the Ruby programming language,
-\citet{mishima2011} proposed Pwrake.
+\citet{mishima2011} proposed Pwrake, which supports parallel execution of
+bioinformatics workflows written (or accessible) in that language.
 
 \section{Design Choices}
 \subsection{Task Based Architecture}
 
 Jug is designed around tasks. A task is defined as a Python function and a set
-of arguments, which may be Python values or the output of other tasks. A task
-should be a pure function, but there is no way of mandating this in the
-language.
+of arguments, which may be Python values or the output of other tasks.
 
 \begin{python}
 from jug import Task
@@ -157,12 +156,11 @@ the directory had a collection of images names 0.png, 1.png,\ldots}
 \label{fig:jug-deps}
 \end{figure}
 
-This defines the task dependency structure represented in
+This code defines the task dependency structure represented in
 Figure~\ref{fig:jug-deps}. As we can see, all of the \code{count} operations
 can be run in parallel, while the \code{mean} operation must wait the result of
 all of the other computation. The dependency structure is always a \textsc{dag}
-(directed acyclic graph). Only by bypassing the normal use mechanisms is it
-even possible to construct a cycle.
+(directed acyclic graph).
 
 The code above has the construct \code{Task(f, args)} repeated several times.
 Using the decorator \code{TaskGenerator} decorator this can be simplified to a
@@ -294,13 +292,16 @@ environments with a batch architecture. As long as all of the processes can
 access the backend, there is no need for them to communicate directly. It can
 even be the case that processors start working on tasks in mid-processing.
 
+This makes jug usable in batch-based computer cluster environments, which are
+quite common in research institutions.
+
 \subsection{Software Development With Jug}
 
 The output of computation can be obtained from jug in two ways: (1) One can
-simply write a task that outputs the desired format. (2) They can be inspected
-interactively using the \emph{shell} subcommand. It is expected that the first
-option will be used for the final version of the computation, whilst the second
-one is most helpful during development.
+simply write a task that writes to a file in the desired format. (2) They can
+be inspected interactively using the \emph{shell} subcommand. It is expected
+that the first option will be used for the final version of the computation,
+whilst the second one is most helpful during development.
 
 The shell subcommand, invokes an IPython instance with all the objects in the
 jugfile loaded. IPython is an enhanced interactive shell for Python
@@ -379,7 +380,7 @@ Therefore, I chose to force the user to explicitly invalidate his results,
 while supporting automatic dependency discovery to make it easier for the user.
 The recommendation is still that the user run the full pipeline from start to
 finish once they are satisfied with the state of the code and certainly before
-publication.
+publication, but the pipeline development stage can be more agile.
 
 \section{Methods}
 \section{Example}
@@ -505,9 +506,9 @@ Jug includes a full test suite. There are no known bugs.
 
 Jug has been available in the Python Package Index\footnote{The Python Package
 Index, PyPI, is accessible at \url{http://pypi.python.org}.} since May~2009
-and has been downloaded over 8000~times (some of these downloads may, of
-course, represent upgrades, and users which downloaded it from some other
-source will not be counted).% FIXME: Check download number. At 8112 12/8/2011
+through February~2012 and has been downloaded over 10,000~times (some of these
+downloads may, of course, represent upgrades, and users which downloaded it
+from some other source will not be counted).
 
 \section{Discussion}
 Unlike most previous tools for reproducible research, jug focuses on the
