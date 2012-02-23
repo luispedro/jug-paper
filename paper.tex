@@ -106,7 +106,12 @@ contention for the global interpreter lock will limit the amount of real
 parallelism.\footnote{In the most commonly used Python interpreters, there is a
 lock that prevents more than one thread from simultaneously executing
 interpreted code, although they can execute non-interpreted code, as calling an
-external programme or certain external libraries.}
+external programme or certain external libraries.} Ruffus is another
+Python-based solution which supports parallel execution of pipelines
+\citep{Goodstadt16092010}. There is a strong dependency on the filesystem,
+which makes its use very different from jug usage, which strives to make its
+usage similar to straight Python usage. Using the Ruby programming language,
+\citet{mishima2011} proposed Pwrake.
 
 \section{Design Choices}
 \subsection{Task Based Architecture}
