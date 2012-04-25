@@ -96,24 +96,6 @@ Python function and its arguments. A jugfile (the file which specifies which
 tasks need to be run---named by analogy to the makefiles of make) is a simple
 Python script with some added notations (we will see just how little changes
 need to be made from a conventional Python script).
-
-\citet{Fomel2007} proposed a system built on top of Scons which shared
-superficially similar design. Scons, like Make, is a build system. It supports
-spawning parallel jobs using multiple threads. In the original use case, the
-tasks are delegated to other commands and the operating system can take care of
-parallelism. If, however, the tasks are computationally intensive in Python,
-contention for the global interpreter lock will limit the amount of real
-parallelism.\footnote{In the most commonly used Python interpreters, there is a
-lock that prevents more than one thread from simultaneously executing
-interpreted code, although they can execute non-interpreted code, as calling an
-external programme or certain external libraries.} Ruffus is another
-Python-based solution which supports parallel execution of pipelines
-\citep{Goodstadt16092010}. There is a strong dependency on the filesystem,
-which makes its use very different from jug usage, which strives to make its
-usage similar to straight Python usage. Using the Ruby programming language,
-\citet{mishima2011} proposed Pwrake, which supports parallel execution of
-bioinformatics workflows written (or accessible) in that language.
-
 \section{Design Choices}
 \subsection{Task Based Architecture}
 
@@ -511,6 +493,38 @@ downloads may, of course, represent upgrades, and users which downloaded it
 from some other source will not be counted).
 
 \section{Discussion}
+
+\subsection{Similar Tools}
+
+\citet{Fomel2007} proposed a system built on top of Scons which shared
+superficially similar design. Scons, like Make, is a build system. It supports
+spawning parallel jobs using multiple threads. In the original use case, the
+tasks are delegated to other commands and the operating system can take care of
+parallelism. If, however, the tasks are computationally intensive in Python,
+contention for the global interpreter lock will limit the amount of real
+parallelism.\footnote{In the most commonly used Python interpreters, there is a
+lock that prevents more than one thread from simultaneously executing
+interpreted code, although they can execute non-interpreted code, as calling an
+external programme or certain external libraries.} Ruffus is another
+Python-based solution which supports parallel execution of pipelines
+\citep{Goodstadt16092010}. There is a strong dependency on the filesystem,
+which makes its use very different from jug usage, which strives to make its
+usage similar to straight Python usage. Using the Ruby programming language,
+\citet{mishima2011} proposed Pwrake, which supports parallel execution of
+bioinformatics workflows written (or accessible) in that language.
+
+Of interest, is also the \textsc{IncPy} implementation of a Python interpreter
+with automatic persistent memoization~\cite{Guo_IncPy,Guo_IncPy_pre}. The
+arguments made for that system apply to Jug as well, with a few differences.
+Their system implements automatic memoization, while, using Jug, the user needs
+to automatically annotate functions to memoize using \texttt{TaskGenerator}.
+This extra control can be necessary to avoid a proliferation of intermediate
+results when these are very large (often a very large intermediate output is
+not necessary, and only a summary must be kept). Additionally, Jug supports
+running tasks in parallel, a functionality that is absent from \textsc{IncPy}.
+
+\subsection{Conclusions}
+
 Unlike most previous tools for reproducible research, jug focuses on the
 development of the computation as much as its communication. In fact, when it
 comes to communication other tools might be better suited as they combine
