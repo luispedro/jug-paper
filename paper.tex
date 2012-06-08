@@ -34,28 +34,29 @@ As computational pipelines become a bigger part of science, it is important to
 ensure that the results are reproducible. All developed software should be able
 to be run automatically without any user intervention.
 
-In addition to the value to the community of being able to reproduce an
-analysis, reproducible research practices allow for better control over the
-project. For example, if necessary parameters to run a pipeline are kept
-separately from the code that implements it (perhaps even in the researcher's
-mind), this leads to error-prone analysis and opens up the possibility that
-when the results are to be writtne up for publication, the researcher will no
-longer be able to even completely describe the process that led to them.
+In addition to being valuable to the wider community, which may wish to
+reproduce or extend a published analysis, reproducible research practices allow
+for better control over the project by the authors themselves. For example, if
+necessary parameters to run a pipeline are kept separately from the code that
+implements it (perhaps even in mind of the researcher), this leads to
+error-prone analysis and opens up the possibility that when the results are to
+be written up for publication, the researcher will no longer be able to even
+completely describe the process that led to them.
 
 For large projects, the use of multiple processors (either in the same machine
 or distributed across a cluster) is necessary to obtain results in a useful
-timeframe. Furthermore, it is often the case that, as the project evolves, it
+time frame. Furthermore, it is often the case that, as the project evolves, it
 becomes necessary to save intermediate results while down-stream analyses are
-designed (or redesigned) and implemented. Therefore, having a single point of
-entry (often in the form of a single script or a single main programme) for the
-computation becomes increasingly difficult.
+designed (or redesigned) and implemented. Under many frameworks, this causes
+having a single point of entry (often in the form of a single script or a
+single main programme) for the computation becomes increasingly difficult.
 
-Jug is a software framework which solves all of these problems in a
-simple way. Jug supports caching of intermediate results, distribution of
-computation as tasks across a network.
+Jug is a software framework which solves all of these problems in a simple way.
+Jug supports caching of intermediate results, distribution of computation as
+tasks across a network.
 
 Jug is written in pure Python, is completely cross-platform, and available as
-free software under the MIT license. Jug is available from
+free software under the liberal MIT license. Jug is available from
 \url{http://github.com/luispedro/jug}.
 \bigskip
 \bigskip
@@ -69,10 +70,10 @@ have been proposed towards the goal of reproducing published analyses.
 
 These solutions do not necessarily scale to large problems, those that take
 several days, months, or years of CPU time. For very large problems,
-specialized solutions are needed, but there is a range of medium-sized problems
-that can be successfully tackled on a computer cluster with a few hundred nodes
-or less (so that a computation that would take a CPU-year can produce results
-in less than a day).
+specialized solutions are needed~\citep{mapReduce}. There is a range of
+medium-sized problems that can be successfully tackled on a computer cluster
+with a few hundred nodes or less (so that a computation that would take a
+CPU-year can produce results in less than a day).
 
 The typical ad hoc solution to this problem is to save intermediate files.
 Often the design of the computation itself takes several iterations as
@@ -86,16 +87,17 @@ machines).
 
 By allowing caching of results, where the caching depends explicitly on the
 input parameters of that computation. Any change in the parameters immediately
-triggers a recomputation of all dependendent results. The basic model is
-similar to the one of the venerable Unix tool Make, which has been used before
-for implementing reproducible research
-pipelines~\citep{Schwab00makingscientific}.
+triggers a recomputation of all dependent results. The basic model is similar
+to the one of the venerable Unix tool Make, which has been used before for
+implementing reproducible research pipelines~\citep{Schwab00makingscientific}.
 
 However, unlike make, jug is written in Python and tasks can consist of any
-Python function and its arguments. A jugfile (the file which specifies which
-tasks need to be run---named by analogy to the makefiles of make) is a simple
-Python script with some added notations (we will see just how little changes
-need to be made from a conventional Python script).
+Python function and its arguments. This can include running external commands.
+A jugfile (the file which specifies which tasks need to be run---named by
+analogy to the makefiles of make) is a simple Python script with some added
+notations (we will see just how little changes need to be made from a
+conventional Python script).
+
 \section{Design Choices}
 \subsection{Task Based Architecture}
 
@@ -178,8 +180,8 @@ be used. Generically, we refer to the script being run as the jugfile.
 Jug is structured as a series of subcommands, the most important of which are
 \emph{execute}, \emph{status}, and \emph{shell}.
 
-Execution is the command used for running the tasks. In broad terms it performs
-the loop below.
+Execution is the command used for running the tasks. It performs a more complex
+version of this loop:
 
 \begin{python}
 tasks = alltasks in topological sort order
@@ -224,6 +226,7 @@ example jugfile above. We assume that the jugfile was called \code{images.py}
 on disk and that there were 20~images in the directory. We can see that there
 are 20~tasks ready to run, while the \code{mean} task is still waiting for the
 results of the other tasks.
+
 \subsection{Backends}
 
 A basic feature of jug is its ability to save and load results. Each task
@@ -268,14 +271,11 @@ testing, but can be useful on its own.
 \subsection{Asynchronous Function}
 
 Parallelisation is achieved by running more than one jug process
-simmultaneously. All of the synchronisation is outsourced to the backend. This
-has certain limitations, but it makes jug usable in certain cluster computing
-environments with a batch architecture. As long as all of the processes can
-access the backend, there is no need for them to communicate directly. It can
-even be the case that processors start working on tasks in mid-processing.
-
-This makes jug usable in batch-based computer cluster environments, which are
-quite common in research institutions.
+simultaneously. All of the synchronisation is outsourced to the backend. As
+long as all of the processes can access the backend, there is no need for them
+to communicate directly. It can even be the case that processors start working
+on tasks in mid-processing. This makes jug usable in batch-based computer
+cluster environments, which are quite common in research institutions.
 
 \subsection{Software Development With Jug}
 
@@ -335,11 +335,10 @@ results of a computation by others.
 
 It is often the case that one improves a step in a computational pipeline and
 wished to obtain the result of recomputing the pipeline while reusing as much
-of the previously computed intermediate results. With the manual management of
-results I found this to be the most error-prone operation: by not removing
-enough of the intermediate files, it was easy to generate an irreproducible
-state where part of the computations were made using one version of the code
-and part with another.
+of the previously computed intermediate results. Before using Jug, I found this
+to be a very error-prone operation: by not removing enough of the intermediate
+files, it was easy to generate an irreproducible state where part of the
+computations were made using one version of the code and part with another.
 
 Therefore, jug adds some support for result invalidation. When a results from a
 task are invalidated, all tasks which, directly or indirectly, depend on them
@@ -353,7 +352,7 @@ depended on other functions, especially if this was done in a dynamic way, it
 could be hard to discover all dependencies (cf.\ sumatra~\footnote{Sumatra is a
 tool to collect all dependencies that are necessary to run a particular
 computation. Its webpage is located at
-\url{http://neuralensemble.org/trac/sumatra}.}). Additionally, minute
+\url{http://neuralensemble.org/trac/sumatra}.}). Additionally, even minute
 refactoring of the code would lead to over eager recomputation. This could make
 the developer wary of making improvements in their code, resulting in overall
 worse code.
@@ -380,7 +379,7 @@ To evaluate classification, the dataset is broken up into 10~pieces and each of
 the pieces is held-out of the analysis and then used to evaluate analysis (the
 final result is the average of all ten values). This is known as
 cross-validation. In this case, I use another library (which I also wrote)
-which has a builtin method for jug-aware cross-validation.
+which has a built-in method for jug-aware cross-validation.
 
 \begin{python}
 from jug import TaskGenerator, CachedFunction
@@ -488,7 +487,7 @@ Jug includes a full test suite. There are no known bugs.
 
 Jug has been available in the Python Package Index\footnote{The Python Package
 Index, PyPI, is accessible at \url{http://pypi.python.org}.} since May~2009
-through February~2012 and has been downloaded over 10,000~times (some of these
+through June~2012 and has been downloaded over 13,000~times (some of these
 downloads may, of course, represent upgrades, and users which downloaded it
 from some other source will not be counted).
 
