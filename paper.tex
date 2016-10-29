@@ -31,25 +31,26 @@
 
 \section*{Abstract}
 As computational pipelines become a bigger part of science, it is important to
-ensure that the results are reproducible. All developed software should be able
-to be run automatically without any user intervention.
+ensure that the results are reproducible, a concern which has come to the fore
+in recent years. All developed software should be able to be run automatically
+without any user intervention.
 
 In addition to being valuable to the wider community, which may wish to
 reproduce or extend a published analysis, reproducible research practices allow
 for better control over the project by the authors themselves. For example, if
 necessary parameters to run a pipeline are kept separately from the code that
-implements it (in some instance even in mind of the researcher), this leads to
-error-prone analysis and opens up the possibility that when the results are to
-be written up for publication, the researcher will no longer be able to even
-completely describe the process that led to them.
+implements it, this leads to error-prone analysis and opens up the possibility
+that when the results are to be written up for publication, the researcher will
+no longer be able to even completely describe the process that led to them.
 
-For large projects, the use of multiple processors (either in the same machine
-or distributed across a cluster) is necessary to obtain results in a useful
-time frame. Furthermore, it is often the case that, as the project evolves, it
-becomes necessary to save intermediate results while down-stream analyses are
-designed (or redesigned) and implemented. Under many frameworks, this causes
-having a single point of entry (often in the form of a single script or a
-single main programme) for the computation becomes increasingly difficult.
+For large projects, the use of multiple computational ccores (either in the
+same machine or distributed across a cluster) is necessary to obtain results in
+a useful time frame. Furthermore, it is often the case that, as the project
+evolves, it becomes necessary to save intermediate results while down-stream
+analyses are designed (or redesigned) and implemented. Under many frameworks,
+this causes having a single point of entry (often in the form of a single
+script or a single main programme) for the computation becomes increasingly
+difficult.
 
 Jug is a software framework which solves all of these problems in a simple way.
 Jug supports caching of intermediate results, distribution of computation as
@@ -75,8 +76,8 @@ medium-sized problems that can be successfully tackled on a computer cluster
 with a few hundred nodes or less (so that a computation that would take a
 CPU-year can produce results in less than a day).
 
-The typical ad hoc solution to this problem is to save intermediate files.
-Often the design of the computation itself takes several iterations as
+The typical ad hoc solution to this problem is to save intermediate files on
+disk. Often the design of the computation itself takes several iterations as
 intermediate steps are improved. Thus, some intermediate results need to be
 recomputed. This involves a great amount of human management of the state of
 the computation, breaking it up into pieces, and issuing jobs on the cluster.
@@ -106,6 +107,8 @@ conventional Python script into a Jugfile).
 
 Jug is designed around tasks. A task is defined as a Python function and a set
 of arguments, which may be Python values or the output of other tasks.
+
+For example:
 
 \begin{python}
 from jug import Task
@@ -184,7 +187,7 @@ Jug is structured as a series of subcommands, the most important of which are
 \emph{execute}, \emph{status}, and \emph{shell}.
 
 Execution is the command used for running the tasks. It performs a more complex
-version of this loop:
+version of the following pseudo-code:
 
 \begin{python}
 tasks = alltasks in topological sort order
@@ -201,7 +204,6 @@ If run on a single processor, this will just run all of the tasks in order. It
 is most interesting when it is run on multiple processors. Because of the lock
 synchronisation, tasks can be run in parallel to take advantage of the multiple
 cores.
-
 
 The actual code is more complex than what is shown above, particularly to make
 sure that the locking is performed correctly and that the waiting step
@@ -225,12 +227,12 @@ removed).}
 \label{fig:jug-status-output}
 \end{figure}
 
-The status command prints out a summary of the status of all of the tasks.
-Figure~\ref{fig:jug-status-output} shows the output of this command using the
-example jugfile above. We assume that the jugfile was called \code{images.py}
-on disk and that there were 20~images in the directory. We can see that there
-are 20~tasks ready to run, while the \code{mean} task is still waiting for the
-results of the other tasks.
+The \texttt{status} subcommand prints out a summary of the status of all of the
+tasks. Figure~\ref{fig:jug-status-output} shows the output of this command
+using the example jugfile above. We assume that the jugfile was called
+\code{images.py} on disk and that there were 20~images in the directory. We can
+see that there are 20~tasks ready to run, while the \code{mean} task is still
+waiting for the results of the other tasks.
 
 \subsection{Backends}
 
@@ -352,17 +354,18 @@ Therefore, jug adds support for result invalidation. When a results from a task
 are invalidated, all tasks which, directly or indirectly, depend on them are
 also marked for deletion.
 
-It is still necessary to manually invalidate tasks. An alternative, was to have
-the code which implements the task be taken into account while computing the
-hash. While this would add another layer of protection, it would still be
-possible to make mistakes. If the function depended on other functions,
-especially if this was done in a dynamic way, it could be hard to discover all
-dependencies (cf.\ sumatra~\footnote{Sumatra is a tool to collect all
-dependencies that are necessary to run a particular computation. Its webpage is
-located at \url{http://neuralensemble.org/trac/sumatra}.}). Additionally, even
-minute refactoring of the code would lead to over eager recomputation. This
-could make the developer wary of making improvements in their code, resulting
-in overall worse code.
+It is still necessary to manually invalidate tasks. An alternative, would be to
+take code which implements the task into account while computing the hash. This
+would mark any results computed with this code as outdated if the code changed.
+While this would add another layer of protection, it would still be possible to
+make mistakes. If the function depended on other functions, especially if this
+was done in a dynamic way, it could be hard to discover all dependencies (cf.\
+sumatra~\footnote{Sumatra is a tool to collect all dependencies that are
+necessary to run a particular computation. Its webpage is located at
+\url{http://neuralensemble.org/trac/sumatra}.}). Additionally, even minute
+refactoring of the code would lead to over eager recomputation. This could make
+the developer wary of making improvements in their code, resulting in overall
+worse code.
 
 Therefore, as a design choice, jug asks the user to explicitly invalidate their
 results, while supporting automatic dependency discovery. The recommendation is
