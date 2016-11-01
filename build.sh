@@ -1,4 +1,5 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash
 
 function build() {
   input=$1
