@@ -22,6 +22,7 @@
 }
 \let\code\texttt
 \addbibresource{references.bib}
+\addbibresource{readcube_export.bib}
 
 \title{Jug: Software for Reproducible Computation In Python}
 \author{Luis Pedro Coelho}
@@ -37,20 +38,21 @@ without any user intervention.
 
 In addition to being valuable to the wider community, which may wish to
 reproduce or extend a published analysis, reproducible research practices allow
-for better control over the project by the authors themselves. For example, if
-necessary parameters to run a pipeline are kept separately from the code that
-implements it, this leads to error-prone analysis and opens up the possibility
-that when the results are to be written up for publication, the researcher will
-no longer be able to even completely describe the process that led to them.
+for better control over the project by the original authors themselves. For
+example, if necessary parameters to run a pipeline are kept separately from the
+code that implements it, this leads to error-prone analysis and opens up the
+possibility that, when the results are to be written up for publication, the
+researcher will no longer be able to even completely describe the process that
+led to them.
 
-For large projects, the use of multiple computational ccores (either in the
-same machine or distributed across a cluster) is necessary to obtain results in
-a useful time frame. Furthermore, it is often the case that, as the project
-evolves, it becomes necessary to save intermediate results while down-stream
-analyses are designed (or redesigned) and implemented. Under many frameworks,
-this causes having a single point of entry (often in the form of a single
-script or a single main programme) for the computation becomes increasingly
-difficult.
+For large projects, the use of multiple computational cores (either in a
+multi-core machine or distributed across a compute cluster) is necessary to
+obtain results in a useful time frame. Furthermore, it is often the case that,
+as the project evolves, it becomes necessary to save intermediate results while
+down-stream analyses are designed (or re-designed) and implemented. Under many
+frameworks, this causes having a single point of entry (often in the form of a
+single script or a single main programme) for the computation becomes
+increasingly difficult.
 
 Jug is a software framework which solves all of these problems in a simple way.
 Jug supports caching of intermediate results, distribution of computation as
@@ -64,23 +66,26 @@ free software under the liberal MIT license. Jug is available from
 
 \section{Introduction}
 The value of reproducible research in computational fields has been recognized
-in several areas \citep{Vandewalle2009,Nordlie2009}. Although some of the
-reports are still more forward looking rather than descriptive of current
-practice, several implementations of reproducible papers (or executable papers)
-have been proposed towards the goal of reproducing published analyses.
+in several areas
+\citep{donoho2009reproducible,v2009reproducible,nordlie2009towards,fomel2015reproducible,leveque2012reproducible,dudley2010reproducible}.
+Although some of the reports are still more forward looking rather than
+descriptive of current practice, several implementations of reproducible papers
+(or executable papers) have been proposed towards the goal of reproducing
+published analyses.
 
 These solutions do not necessarily scale to large problems, those that take
 several days, months, or years of CPU time. For very large problems,
-specialized solutions are needed~\citep{mapReduce}. There is a range of
-medium-sized problems that can be successfully tackled on a computer cluster
-with a few hundred nodes or less (so that a computation that would take a
-CPU-year can produce results in less than a day).
+specialized solutions are needed~\citep{dean2008mapreduce,zaharia2010spark}.
+There is a range of medium-sized problems that can be successfully tackled on a
+computer cluster with a small number of nodes or even taking advantage of a
+single multicore machine.
 
 The typical ad hoc solution to this problem is to save intermediate files on
-disk. Often the design of the computation itself takes several iterations as
-intermediate steps are improved. Thus, some intermediate results need to be
-recomputed. This involves a great amount of human management of the state of
-the computation, breaking it up into pieces, and issuing jobs on the cluster.
+disk. A limitation of this approach is that often the design of the computation
+itself takes several iterations as intermediate steps are improved. Thus, some
+intermediate results need to be recomputed. This involves a large amount of
+human management of the state of the computation, breaking it up into pieces,
+and issuing jobs on the cluster.
 
 Jug is a task-based framework for Python, which supports saving and sharing of
 intermediate results and parallelisation on computer clusters (or multi-core
@@ -92,13 +97,15 @@ triggers a recomputation of all dependent results. The basic model is similar
 to the one of the venerable Unix tool Make, which has been used before for
 implementing reproducible research pipelines~\citep{Schwab00makingscientific}.
 
-However, unlike make, jug is written in Python and tasks can consist of any
-Python function and its arguments. This can include running external commands
-and calling routines written in other languages as Python has many tools to
-interface with the rest of the system.
+However, unlike make, jug is written in Python, a general purpose programming
+language which is widely used in scientific programming \citep{prabhu2011a}.  A
+Task in Jug can consist of any Python function and its arguments. The task can
+include running external commands and calling routines written in other
+languages as Python has many tools to interface with the rest of the system
+\citep{beazley1996swig,beazley2003automated,behnel2011cython}.
 
-A jugfile (the file which specifies which tasks need to be run---named by
-analogy to the makefiles of make) is a simple Python script with some added
+A Jugfile (the file which specifies which tasks need to be run---named by
+analogy to the Makefiles of make) is a simple Python script with some added
 notations (we will see the only a few, small, changes are needed to transform a
 conventional Python script into a Jugfile).
 
@@ -258,11 +265,11 @@ correctly to avoid race conditions. This is the default backend, identified
 simply by a directory name. Inside this directory, files named by a hexadecimal
 representation of their hashes. Objects are saved using Python's \code{pickle}
 module with zlib compression. As a special case, \code{numpy} arrays
-\citep{numpy} are saved to disk directly. This special case was introduced as
-\code{numpy} arrays are a very common data type in scientific programming and
-saving them directly allows for very fast saving and loading (they are
-represented on disk as a header followed by the binary information they
-contain).
+\citep{walt2011the} are saved to disk directly. This special case was
+introduced as \code{numpy} arrays are a very common data type in scientific
+programming and saving them directly allows for very fast saving and loading
+(they are represented on disk as a header followed by the binary information
+they contain).
 
 Another backend currently included with jug is a redis backend. Redis a
 name-key database system.\footnote{See the redis webpage, at
@@ -286,33 +293,27 @@ cluster environments, which are quite common in research institutions.
 \subsection{Software Development With Jug}
 
 The output of computation can be obtained from jug in three ways: (1) One can
-simply write a task that writes the output to a file in the desired format. (2)
+write a task that writes the output to a file in the desired format. (2)
 Outputs can be inspected interactively using the \emph{shell} subcommand. It is
 expected that the first option will be used for the final version of the
 computation, whilst the second one is most helpful during development. Finally,
 (3) jug can be loaded as a library from a Python script and jug computation
-outputs can serve as inputs for further computation.
+outputs can serve as inputs for further computation. This can be performed from
+inside a Jupyter notebook \citep{kluyver2016jupyter}.
 
-The shell subcommand, invokes an IPython instance with all the objects in the
-jugfile loaded. IPython is an enhanced interactive shell for Python
-\citep{Perez2007}. A few functions are added to the namespace, in particular,
-\code{value} can load the results of a task object if necessary.
+The shell subcommand, invokes an Jupyter instance with all the objects in the
+jugfile loaded. The Jupyter console is an enhanced interactive shell for Python
+\citep{perez2007ipython}. A few functions are added to the namespace, in
+particular, \code{value} can load the results of a task object if necessary.
 
 \begin{figure}
 \begin{center}
 \begin{verbatim}
 $jug shell images.py
 
-=========
-Jug Shell
-=========
-
-
 Available jug functions:
     - value() : loads a specific object
     - load_all() : loads all objects
-
-Enjoy...
 
 
 In [1]: value(final)
@@ -329,19 +330,15 @@ returns the result from any task. The final line has been edited (marked with
 \end{figure}
 
 Figure~\ref{fig:jug-shell-interaction} shows a possible interaction session
-with jug shell. While having to explicitly load all the results is a bit
-bothersome, it can be better than pre-loading all of them. It is much faster at
-startup. Consider too that the user might not load more than a few objects. In
-some cases, loading all of the objects simultaneously might even be impossible
-due to memory constraints. Further, this allows exploration of the task
-structure for debugging.
-
-This is a feature which can be used to debug one's own code or to explore the
-results of a computation by others.
+with jug shell. While having to explicitly load all the results may be
+bothersome, it is both much faster at start up and the user might not load more
+than a few objects throughout their session. In some cases, loading all of the
+objects simultaneously might even be impossible due to memory constraints.
+Furthermore, this allows exploration of the task structure for debugging.
 
 \subsection{Result Invalidation}
 
-If a developer improves an intermediate step in a pipeline (e.g., fixes a bug)
+If a researcher improves an intermediate step in a pipeline (e.g., fixes a bug)
 and wishes to obtain new results of the computation, then all outputs from that
 step and downstream must be recomputed, but results from upstream and unrelated
 processes can be reused. Formally, in the task DAG, affected tasks and their
@@ -351,8 +348,8 @@ easy to generate an irreproducible state where part of the computations were
 made using one version of the code and part with another.
 
 Therefore, jug adds support for result invalidation. When a results from a task
-are invalidated, all tasks which, directly or indirectly, depend on them are
-also marked for deletion.
+are invalidated, all tasks which (directly or indirectly) depend on them are
+also invalidated.
 
 It is still necessary to manually invalidate tasks. An alternative, would be to
 take code which implements the task into account while computing the hash. This
@@ -360,9 +357,8 @@ would mark any results computed with this code as outdated if the code changed.
 While this would add another layer of protection, it would still be possible to
 make mistakes. If the function depended on other functions, especially if this
 was done in a dynamic way, it could be hard to discover all dependencies (cf.\
-sumatra~\footnote{Sumatra is a tool to collect all dependencies that are
-necessary to run a particular computation. Its webpage is located at
-\url{http://neuralensemble.org/trac/sumatra}.}). Additionally, even minute
+sumatra, which does capture all dependencies that are necessary to run a
+particular computation \citep{davison2012automated}). Additionally, even minute
 refactoring of the code would lead to over eager recomputation. This could make
 the developer wary of making improvements in their code, resulting in overall
 worse code.
@@ -373,80 +369,80 @@ still that the user run the full pipeline from start to finish once they are
 satisfied with the state of the code and certainly before publication, but the
 pipeline development stage can be more agile.
 
-\section{Methods}
 \section{Example}
-
-I will present an example from my research. Although it introduces some
-unnecessary complexity, it has the advantage of being a real-life example of
-the usage of jug.
-
-The goal of this project was to demonstrate that using local features, in
-particular speeded-up robust features (henceforth,
-\textsc{surf})~\cite{surf-paper} improves over image-global features for
-classification of microscope images. A variation of standard \textsc{surf},
-\textsc{surf}-ref, was introduced and tested.
+This section presents an edited version of the code used in a previously
+published study of computer vision techniques for bioimage
+analysis~\cite{coelho2013determining}. The goal of this project was to
+demonstrate that using local features, in particular speeded-up robust features
+(henceforth, \textsc{surf}) improves over image-global features for
+classification of microscope images.
 
 To evaluate classification, the dataset is broken up into 10~pieces and each of
 the pieces is held-out of the analysis and then used to evaluate analysis (the
 final result is the average of all ten values). This is known as
-cross-validation. In this case, I use another library (which I also wrote)
-which has a built-in method for jug-aware cross-validation.
+cross-validation.
 
 \begin{python}
 from jug import TaskGenerator, CachedFunction
+import mahotas as mh
+from sklearn.cross_validation import KFold
 
-# pyslic is used for subcellular location analysis
-import pyslic
-
-# milk (machine learning toolkit)
-from milk.ext.jugparallel import nfoldcrossvalidation
-
-datasets = [ 'data0', 'data1', ]
-featuresets = [ 'field-dna+', 'surf', 'surf-ref', ]
-
-def load(dset):
+def load():
     '''
     This function assumes that the images are stored in
-    ../data/dset with filenames matching the pattern
-    label-(protein|dna)-([0-9]).tiff
+    data/<dset> with filenames matching the pattern
+    label-protein-([0-9]).tiff
     '''
     from os import listdir
     images = []
-    base = '../data/'+dset
+    base = './data/'
     for path in listdir(base):
         if not 'protein' in path: continue
         label = path.split('-')[0]
         # We only store paths and will load data on demand
         # This save memory.
-        im = pyslic.Image({
-                'protein': base + path,
-                'dna' : base + path.replace('protein','dna')
-                })
-        im.label = label
+        im = (base + path, label)
         images.append(im)
     return images
 
-# pyslic.computefeatures takes an image and an identifier of the
-# feature set and returns a set of features (as a numeric array).
-#
-# TaskGenerator can be used directly to adapt existing functions
-computefeatures = TaskGenerator(pyslic.computefeatures)
 
-# or it can be used as a decorator on a newly defined function
+# TaskGenerator can be used with any function, including builtins:
+jug_sum = TaskGenerator(sum)
+
+@TaskGenerator
+def computefeatures(im):
+    im = mh.imread(im)
+    return mh.features.haralick(im)
+
 @TaskGenerator
 def output(cmatrix, dset, fset):
-    output = file('results/cmatrix-'+dset+'-'+fset+'.txt', 'w')
-    print >>output, cmatrix
-    output.close()
+    with open('results/cmatrix-'+dset+'-'+fset+'.txt', 'w') as output:
+        output.write(cmatrix)
+        output.write('\n')
 
+@TaskGenerator
+def train_test1(features, labels, train, test):
+    from sklearn import linear_model
+    from sklearn import metrics
+    clf = linear_model.LogisticRegression()
+    clf.fit(features[train], labels[train])
+    preds = clf.predict(features[test])
+    return metrics.confusion_matrix(labels[test], preds)
+
+
+images = CachedFunction(load)
 features = []
-for dset in datasets:
-    images = CachedFunction(load, dset)
-    labels = [im.label for im in images]
-    for fset in featuresets:
-        features = [computefeatures(im, fset) for im in images]
-        cmatrix = nfoldcrossvalidation(features, labels)
-        output(cmatrix, dset, fset)
+images = []
+for im,label in images:
+    labels.append(label)
+    features.append(haralick(im))
+cmats = []
+for train,test in KFold(len(features), n_folds=10):
+    cmats.append(
+        train_test1(features, labels, train, test))
+return jug_sum(cmats)
+cmatrix = nfoldcrossvalidation(features, labels)
+output(cmatrix, dset, fset)
 \end{python}
 
 Figure~\ref{fig:jug-deps-complex} shows the dependency structure of this
@@ -492,69 +488,83 @@ use, copy, and modify the code almost at will. It is developed using the git
 version control tool, with the project being hosted on the github
 platform.\footnote{The jug project is available at
 \url{https://www.github.com/luispedro/jug}.} An open mailing-list provides
-support and reported bugs are generally fixed within hours.
+support and reported bugs are generally fixed within hours or days.
 
-Jug includes a full test suite. There are no known bugs.
+Jug includes a full test suite with continuous integration, which are best
+practices \citep{wilson2014best} which can improve productivity
+\citep{vasilescu2015quality}. There are no known bugs.
 
 \section{Discussion}
 
 \subsection{Similar Tools}
 
-\citet{Fomel2007} proposed a system built on top of Scons which shared
-superficially similar design. Scons, like Make, is a build system. It supports
-spawning parallel jobs using multiple threads. In the original use case, the
-tasks are delegated to other commands and the operating system can take care of
-parallelism. If, however, the tasks are computationally intensive in Python,
-contention for the global interpreter lock will limit the amount of real
-parallelism.\footnote{In the most commonly used Python interpreters, there is a
-lock that prevents more than one thread from simultaneously executing
-interpreted code, although they can execute non-interpreted code, as calling an
-external programme or certain external libraries.} Ruffus is another
-Python-based solution which supports parallel execution of pipelines
-\citep{Goodstadt16092010}. There is a strong dependency on the filesystem,
-which makes its use very different from jug usage, which strives to make its
-usage similar to straight Python usage. Using the Ruby programming language,
-\citet{mishima2011} proposed Pwrake, which supports parallel execution of
-bioinformatics workflows written (or accessible) in that language.
+Several pipeline tools have been used (for a recent review, see the work of
+\citet{leipzig2016a}). \citet{2007reproducible} proposed a system built on
+top of Scons which shared superficially similar design. Scons, like Make, is a
+build system. It supports spawning parallel jobs using multiple threads. In the
+original use case, the tasks are delegated to other commands and the operating
+system can take care of parallelism. If, however, the tasks are computationally
+intensive in Python, contention for the global interpreter lock will limit the
+amount of real parallelism.\footnote{In the most commonly used Python
+interpreters, there is a lock that prevents more than one thread from
+simultaneously executing interpreted code, although they can execute
+non-interpreted code, as calling an external programme or certain external
+libraries.} Ruffus is another Python-based solution which supports parallel
+execution of pipelines \citep{goodstadt2010ruffus}. Using the Ruby programming
+language, \citet{mishima2011} proposed Pwrake, which supports parallel
+execution of bioinformatics workflows written (or accessible) in that language.
+Snakemake~\citep{kster2012snakemakea} also improves over Make by providing more
+complex rules and automatic interaction with a high performance compute
+cluster. \citet{sadedin2012bpipe} proposed Bpipe, a tool based on a
+domain-specific language around shell scripting. One large difference of Jug
+compared to these tools is that Jug is tightly integrated with Python code.
+Thus, while it lacks support for directly spawning processes like Make, it is
+easier to call Python-based functions.
 
-Of interest, is also the \textsc{IncPy} implementation of a Python interpreter
-with automatic persistent memoization~\cite{Guo_IncPy,Guo_IncPy_pre}. The
-arguments made for that system apply to Jug as well, with a few differences.
-Their system implements automatic memoization, while, using Jug, the user needs
-to automatically annotate functions to memoize using \texttt{TaskGenerator}.
-This extra control can be necessary to avoid a proliferation of intermediate
-results when these are very large (often a very large intermediate output is
-not necessary, and only a summary must be kept). Additionally, Jug supports
-running tasks in parallel, a functionality that is absent from \textsc{IncPy}.
+Also relevant is the \textsc{IncPy} implementation of a Python interpreter with
+automatic persistent memoization~\cite{guo2010towards,guo2011using}
+(unfortunately, no longer maintained). The advantages of that system apply to
+Jug as well, with a few differences. Their system implements automatic
+memoization, while, using Jug, the user needs to automatically annotate
+functions to memoize using \texttt{TaskGenerator}.  This extra control can be
+necessary to avoid a proliferation of intermediate results when these are very
+large (often a very large intermediate output is not necessary, and only a
+summary must be kept) at the cost of increased overhead for the programmer.
+Additionally, Jug supports running tasks in parallel, a functionality that is
+absent from \textsc{IncPy}.
+
+Finally, joblib and memo \citep{moreno2016improving} use mechanisms similar to
+Jug for in-process and in-memory memoization and parallelization.
 
 \subsection{Conclusions}
 
-Unlike most previous tools for reproducible research, jug focuses on the
-development of the computation as much as its communication. In fact, when it
-comes to communication other tools might be better suited as they combine
-written exposition with computer code. They can be used in combination with jug
-as they do not often provide caching and distribution, needed for large
-projects. While the simplest mode of jug use is to have a single
-\textit{jugfile}, a jugfile can import the results of another. For example, a
-first jugfile might perform all heavy-duty computation and be run on a
-computing cluster. A second script could be embedded inside an executable paper
-to generate tables and plots \citep{Delescluse2011}. This faster script could
+Jug focuses on the development of the computation as much as its communication.
+In fact, when it comes to communication other tools might be better suited as
+they combine written exposition with computer code. They can be used in
+combination with jug as they do not often provide caching and distribution,
+needed for large projects. While the simplest mode of jug use is to have a
+single \textit{jugfile}, a jugfile can import the results of another. For
+example, a first jugfile might perform all heavy-duty computation and be run on
+a computing cluster. A second script could be embedded inside an executable
+paper to generate tables and plots \citep{2011making}. This faster script could
 be run as part of building the paper (while the longer script would take too
 long).
 
 Jug improves the pipeline development experience and makes the programming
-researcher more productive and less error-prone. As it is based on Python, a
-widely used scientific programming language, it can be used in a known
-environment without a long learning process.
+researcher more productive and less error-prone. As many scientists now spend a
+significant fraction of their time performing computational work
+\citep{prabhu2011a,hannay2009how}, increasing their productivity in this task
+can have significant effects.  Jug is based on Python, a widely used scientific
+programming language, it can be used in a known environment without a high
+learning curve.
 
 Jug was not designed to compete with large scale frameworks such as Hadoop or
 Spark, which scale better to very large projects. However, those frameworks
 have much higher costs in terms of development time (code must be written
-especially for the framework) and overhead. For scientists using small to
-medium-sized cluster (hundreds, not thousands, of nodes), with a shared
-file-system (as opposed to the distributed file-systems necessary for truly
-large amounts of data) jug provides a better trade-off than those
-higher-powered alternatives in a familiar programming language.
+especially for the framework) and overhead. For scientists who want to quickly
+adapt pre-existing code to run on a cluster or even a multi-core machine, jug
+provides a better trade-off than those higher-powered alternatives in a
+familiar programming language.
 
 \printbibliography
 \end{document}
